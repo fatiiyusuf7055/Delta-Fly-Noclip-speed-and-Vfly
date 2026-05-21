@@ -1,0 +1,148 @@
+-- Delta Executor GUI Mobile: NoClip / VFly / Speed + Sliders by Copilot
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+local noClip, flying, speedEnabled = false, false, false
+local flySpeed, walkSpeed = 5, 32 -- Par défaut
+
+-- Interface
+local gui = Instance.new("ScreenGui")
+gui.Name = "DeltaMobUI"
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Draggable main frame
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 230, 0, 330)
+main.Position = UDim2.new(0, 10, 0, 10)
+main.BackgroundColor3 = Color3.fromRGB(49, 58, 68)
+main.BorderSizePixel = 2
+main.Active = true
+main.Draggable = true
+
+-- Titre
+local label = Instance.new("TextLabel", main)
+label.Size = UDim2.new(1,0,0,30)
+label.Position = UDim2.new(0,0,0,0)
+label.BackgroundTransparency = 1
+label.Text = "Delta Mobile Menu"
+label.Font = Enum.Font.SourceSansBold
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255,255,127)
+
+function makeButton(txt, ypos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1,-20,0,36)
+    btn.Position = UDim2.new(0,10,0,ypos)
+    btn.BackgroundColor3 = Color3.fromRGB(41, 53, 65)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextScaled = true
+    btn.Text = txt
+    btn.Parent = main
+    btn.MouseButton1Click:Connect(function() callback(btn) end)
+    return btn
+end
+
+function makeInput(name, ypos, startValue, min, max, callback)
+    local title = Instance.new("TextLabel", main)
+    title.Size = UDim2.new(0,120,0,25)
+    title.Position = UDim2.new(0,10,0,ypos)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.SourceSans
+    title.Text = name
+    title.TextColor3 = Color3.fromRGB(230,230,180)
+    title.TextScaled = true
+
+    local input = Instance.new("TextBox", main)
+    input.Size = UDim2.new(0,70,0,25)
+    input.Position = UDim2.new(0,135,0,ypos)
+    input.Font = Enum.Font.SourceSansBold
+    input.Text = tostring(startValue)
+    input.TextColor3 = Color3.fromRGB(0,0,0)
+    input.BackgroundColor3 = Color3.fromRGB(200, 220, 245)
+    input.TextScaled = true
+    input.ClearTextOnFocus = false
+    input.FocusLost:Connect(function()
+        local val = tonumber(input.Text)
+        if val and val >= min and val <= max then
+            callback(val)
+        else
+            input.Text = tostring(startValue)
+        end
+    end)
+    return input
+end
+
+-- NoClip
+makeButton("NoClip: OFF", 40, function(self)
+    noClip = not noClip
+    self.Text = "NoClip: "..(noClip and "ON" or "OFF")
+end)
+
+game:GetService("RunService").Stepped:Connect(function()
+    if noClip and char then
+        for _,v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+-- VFly
+local bodyVelocity
+makeButton("VFly: OFF", 90, function(self)
+    flying = not flying
+    self.Text = "VFly: "..(flying and "ON" or "OFF")
+    if not flying and bodyVelocity then
+        bodyVelocity:Destroy(); bodyVelocity = nil; humanoid.PlatformStand = false
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if flying and char and char:FindFirstChild("HumanoidRootPart") then
+        if not bodyVelocity then
+            bodyVelocity = Instance.new("BodyVelocity", char.HumanoidRootPart)
+            bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        end
+        humanoid.PlatformStand = true
+        local move = Vector3.zero
+        local uis = game:GetService("UserInputService")
+        if uis.TouchEnabled then
+            -- Sur mobile, déplacer en bougeant le joystick
+            move = humanoid.MoveDirection
+        else
+            if uis:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+            if uis:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
+        end
+        bodyVelocity.Velocity = move.Unit * flySpeed * (move.Magnitude > 0 and 1 or 0)
+    end
+end)
+
+-- Réglage FlySpeed
+makeInput("VFly Speed", 140, flySpeed, 1, 100, function(val)
+    flySpeed = val
+end)
+
+-- Speed Walk
+makeButton("Speed: OFF", 180, function(self)
+    speedEnabled = not speedEnabled
+    self.Text = "Speed: "..(speedEnabled and "ON" or "OFF")
+    humanoid.WalkSpeed = speedEnabled and walkSpeed or 16
+end)
+
+-- Réglage WalkSpeed
+makeInput("Walk Speed", 230, walkSpeed, 16, 300, function(val)
+    walkSpeed = val
+    if speedEnabled then
+        humanoid.WalkSpeed = val
+    end
+end)
+
+-- Anti-déco GUI
+humanoid.Died:Connect(function()
+    gui:Destroy()
+en.  
