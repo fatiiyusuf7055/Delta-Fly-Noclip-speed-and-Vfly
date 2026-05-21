@@ -1,36 +1,32 @@
 print("Delta menu chargé !")
--- Delta Executor GUI Mobile: NoClip / VFly / Speed + Sliders by Copilot
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local humanoid = char:WaitForChild("Humanoid")
 
-local noClip, flying, speedEnabled = false, false, false
-local flySpeed, walkSpeed = 5, 32 -- Par défaut
+local noClip, flying, speedEnabled, classicFly = false, false, false, false
+local flySpeed, walkSpeed, classicFlySpeed = 5, 32, 64
 
--- Interface
 local gui = Instance.new("ScreenGui")
 gui.Name = "DeltaMobUI"
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Draggable main frame
 local main = Instance.new("Frame", gui)
-main.Size = UDim2.new(0, 230, 0, 330)
+main.Size = UDim2.new(0, 230, 0, 370)
 main.Position = UDim2.new(0, 10, 0, 10)
 main.BackgroundColor3 = Color3.fromRGB(49, 58, 68)
 main.BorderSizePixel = 2
 main.Active = true
 main.Draggable = true
 
--- Titre personnalisé en gras
 local label = Instance.new("TextLabel", main)
 label.Size = UDim2.new(1,0,0,30)
 label.Position = UDim2.new(0,0,0,0)
 label.BackgroundTransparency = 1
-label.Text = "<b>melon hub alpha v0.1</b>"
+label.Text = "<b>melon hub alpha v0.2</b>"
 label.Font = Enum.Font.SourceSansBold
 label.TextScaled = true
 label.TextColor3 = Color3.fromRGB(255,255,127)
-label.RichText = true -- Permet le texte en gras
+label.RichText = true
 
 function makeButton(txt, ypos, callback)
     local btn = Instance.new("TextButton")
@@ -127,13 +123,51 @@ makeInput("VFly Speed", 140, flySpeed, 1, 100, function(val)
     flySpeed = val
 end)
 
-makeButton("Speed: OFF", 180, function(self)
+-- FLY Infinite Yield Style ("Fly: OFF" bouton)
+local flyConn
+makeButton("Fly: OFF", 180, function(self)
+    classicFly = not classicFly
+    self.Text = "Fly: "..(classicFly and "ON" or "OFF")
+    humanoid.PlatformStand = classicFly
+    if not classicFly and flyConn then
+        flyConn:Disconnect()
+        flyConn = nil
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.Velocity = Vector3.zero
+        end
+    elseif classicFly then
+        flyConn = game:GetService("RunService").RenderStepped:Connect(function()
+            if classicFly and char and char:FindFirstChild("HumanoidRootPart") then
+                local flyDir = Vector3.zero
+                local uis = game:GetService("UserInputService")
+                if uis.TouchEnabled then
+                    flyDir = humanoid.MoveDirection
+                else
+                    if uis:IsKeyDown(Enum.KeyCode.W) then flyDir = flyDir + workspace.CurrentCamera.CFrame.LookVector end
+                    if uis:IsKeyDown(Enum.KeyCode.S) then flyDir = flyDir - workspace.CurrentCamera.CFrame.LookVector end
+                    if uis:IsKeyDown(Enum.KeyCode.A) then flyDir = flyDir - workspace.CurrentCamera.CFrame.RightVector end
+                    if uis:IsKeyDown(Enum.KeyCode.D) then flyDir = flyDir + workspace.CurrentCamera.CFrame.RightVector end
+                    if uis:IsKeyDown(Enum.KeyCode.Space) then flyDir = flyDir + Vector3.new(0,1,0) end
+                    if uis:IsKeyDown(Enum.KeyCode.LeftControl) or uis:IsKeyDown(Enum.KeyCode.LeftShift) then flyDir = flyDir - Vector3.new(0,1,0) end
+                end
+                char.HumanoidRootPart.Velocity = flyDir.Unit * classicFlySpeed * (flyDir.Magnitude > 0 and 1 or 0)
+            end
+        end)
+    end
+end)
+
+makeInput("Fly Speed", 220, classicFlySpeed, 10, 200, function(val)
+    classicFlySpeed = val
+end)
+
+-- Speed Walk
+makeButton("Speed: OFF", 260, function(self)
     speedEnabled = not speedEnabled
     self.Text = "Speed: "..(speedEnabled and "ON" or "OFF")
     humanoid.WalkSpeed = speedEnabled and walkSpeed or 16
 end)
 
-makeInput("Walk Speed", 230, walkSpeed, 16, 300, function(val)
+makeInput("Walk Speed", 310, walkSpeed, 16, 300, function(val)
     walkSpeed = val
     if speedEnabled then
         humanoid.WalkSpeed = val
