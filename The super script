@@ -1,3 +1,4 @@
+print("Delta menu chargé !")
 -- Delta Executor GUI Mobile: NoClip / VFly / Speed + Sliders by Copilot
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
@@ -108,7 +109,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
         local move = Vector3.zero
         local uis = game:GetService("UserInputService")
         if uis.TouchEnabled then
-            -- Sur mobile, déplacer en bougeant le joystick
             move = humanoid.MoveDirection
         else
             if uis:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
@@ -122,19 +122,16 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
--- Réglage FlySpeed
 makeInput("VFly Speed", 140, flySpeed, 1, 100, function(val)
     flySpeed = val
 end)
 
--- Speed Walk
 makeButton("Speed: OFF", 180, function(self)
     speedEnabled = not speedEnabled
     self.Text = "Speed: "..(speedEnabled and "ON" or "OFF")
     humanoid.WalkSpeed = speedEnabled and walkSpeed or 16
 end)
 
--- Réglage WalkSpeed
 makeInput("Walk Speed", 230, walkSpeed, 16, 300, function(val)
     walkSpeed = val
     if speedEnabled then
@@ -142,7 +139,6 @@ makeInput("Walk Speed", 230, walkSpeed, 16, 300, function(val)
     end
 end)
 
--- Anti-déco GUI
 humanoid.Died:Connect(function()
     gui:Destroy()
 end)
