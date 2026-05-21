@@ -3,7 +3,7 @@ local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local humanoid = char:WaitForChild("Humanoid")
 
-local noClip, flying, speedEnabled, classicFly = false, false, false, false
+local noClip, vfly_enabled, speedEnabled, classicFly = false, false, false, false
 local flySpeed, walkSpeed, classicFlySpeed = 5, 32, 64
 
 local gui = Instance.new("ScreenGui")
@@ -86,36 +86,45 @@ game:GetService("RunService").Stepped:Connect(function()
     end
 end)
 
--- VFly
-local bodyVelocity
+-- VFly (Infinite Yield logic)
+local vfly_conn
+local vfly_bv
 makeButton("VFly: OFF", 90, function(self)
-    flying = not flying
-    self.Text = "VFly: "..(flying and "ON" or "OFF")
-    if not flying and bodyVelocity then
-        bodyVelocity:Destroy(); bodyVelocity = nil; humanoid.PlatformStand = false
-    end
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if flying and char and char:FindFirstChild("HumanoidRootPart") then
-        if not bodyVelocity then
-            bodyVelocity = Instance.new("BodyVelocity", char.HumanoidRootPart)
-            bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-        end
+    vfly_enabled = not vfly_enabled
+    self.Text = "VFly: "..(vfly_enabled and "ON" or "OFF")
+    if vfly_enabled then
+        if vfly_conn then vfly_conn:Disconnect() end
+        if vfly_bv then vfly_bv:Destroy() end
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        vfly_bv = Instance.new("BodyVelocity")
+        vfly_bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        vfly_bv.P = 1e4
+        vfly_bv.Velocity = Vector3.new()
+        vfly_bv.Parent = char.HumanoidRootPart
         humanoid.PlatformStand = true
-        local move = Vector3.zero
-        local uis = game:GetService("UserInputService")
-        if uis.TouchEnabled then
-            move = humanoid.MoveDirection
-        else
-            if uis:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
-            if uis:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
-            if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
-            if uis:IsKeyDown(Enum.KeyCode.LeftControl) then move = move - Vector3.new(0,1,0) end
+        vfly_conn = game:GetService("RunService").RenderStepped:Connect(function()
+            if not vfly_enabled or not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local move = Vector3.zero
+            local uis = game:GetService("UserInputService")
+            if uis.TouchEnabled then
+                move = humanoid.MoveDirection
+            else
+                if uis:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
+                if uis:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
+                if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+                if uis:IsKeyDown(Enum.KeyCode.LeftControl) or uis:IsKeyDown(Enum.KeyCode.LeftShift) then move = move - Vector3.new(0,1,0) end
+            end
+            vfly_bv.Velocity = (move.Magnitude > 0 and move.Unit or Vector3.zero) * flySpeed
+        end)
+    else
+        humanoid.PlatformStand = false
+        if vfly_conn then vfly_conn:Disconnect() vfly_conn = nil end
+        if vfly_bv then vfly_bv:Destroy() vfly_bv = nil end
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.Velocity = Vector3.zero
         end
-        bodyVelocity.Velocity = move.Unit * flySpeed * (move.Magnitude > 0 and 1 or 0)
     end
 end)
 
