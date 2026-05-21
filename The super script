@@ -145,4 +145,4 @@ end)
 -- Anti-déco GUI
 humanoid.Died:Connect(function()
     gui:Destroy()
-en.  
+end)
