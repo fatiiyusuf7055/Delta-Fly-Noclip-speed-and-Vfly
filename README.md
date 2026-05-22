@@ -12,7 +12,7 @@ A lightweight mobile GUI with movement features.
 Optimized for mobile executors.
 
 ## 🧪 Version
-Current version: **Alpha v0.1**
+New current version: **Alpha v0.2**
 
 ## ⚡ Loadstring
 ```lua
