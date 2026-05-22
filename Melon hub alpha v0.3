@@ -1,0 +1,398 @@
+print("Delta menu chargé !")
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+local noClip, vfly_enabled, speedEnabled, classicFly, infJump = false, false, false, false, false
+local flySpeed, walkSpeed, classicFlySpeed = 5, 32, 64
+local autoRespawn = false
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "MelonHubUI"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = player.PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 230, 0, 452)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Parent = gui
+local fCorner = Instance.new("UICorner")
+fCorner.CornerRadius = UDim.new(0, 10)
+fCorner.Parent = frame
+local fStroke = Instance.new("UIStroke")
+fStroke.Color = Color3.fromRGB(50, 50, 50)
+fStroke.Thickness = 1
+fStroke.Parent = frame
+
+local titleLbl = Instance.new("TextLabel")
+titleLbl.Size = UDim2.new(1, -40, 0, 30)
+titleLbl.Position = UDim2.new(0, 10, 0, 0)
+titleLbl.BackgroundTransparency = 1
+titleLbl.Text = "melon hub alpha v0.2"
+titleLbl.TextColor3 = Color3.fromRGB(200, 200, 200)
+titleLbl.TextSize = 13
+titleLbl.Font = Enum.Font.GothamBold
+titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+titleLbl.Parent = frame
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 28, 0, 28)
+closeBtn.Position = UDim2.new(1, -32, 0, 2)
+closeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+closeBtn.TextSize = 13
+closeBtn.Font = Enum.Font.Gotham
+closeBtn.Parent = frame
+local cCorner = Instance.new("UICorner")
+cCorner.CornerRadius = UDim.new(0, 6)
+cCorner.Parent = closeBtn
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 32, 0, 32)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Text = "MH"
+toggleBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+toggleBtn.TextSize = 10
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Visible = false
+toggleBtn.Parent = gui
+local tCorner = Instance.new("UICorner")
+tCorner.CornerRadius = UDim.new(0, 8)
+tCorner.Parent = toggleBtn
+local tStroke = Instance.new("UIStroke")
+tStroke.Color = Color3.fromRGB(55, 55, 55)
+tStroke.Thickness = 1
+tStroke.Parent = toggleBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    toggleBtn.Visible = true
+end)
+toggleBtn.MouseButton1Click:Connect(function()
+    frame.Visible = true
+    toggleBtn.Visible = false
+end)
+
+local function makeSep(y)
+    local s = Instance.new("Frame")
+    s.Size = UDim2.new(1, -20, 0, 1)
+    s.Position = UDim2.new(0, 10, 0, y)
+    s.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    s.BorderSizePixel = 0
+    s.Parent = frame
+end
+
+local function makeBtn(txt, y)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -20, 0, 36)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BorderSizePixel = 0
+    btn.Text = txt
+    btn.TextColor3 = Color3.fromRGB(210, 210, 210)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = frame
+    local bc = Instance.new("UICorner")
+    bc.CornerRadius = UDim.new(0, 8)
+    bc.Parent = btn
+    local bs = Instance.new("UIStroke")
+    bs.Color = Color3.fromRGB(55, 55, 55)
+    bs.Thickness = 1
+    bs.Parent = btn
+    return btn, bs
+end
+
+local function makeInput(lbl, y, startVal, callback)
+    local lbEl = Instance.new("TextLabel")
+    lbEl.Size = UDim2.new(0, 125, 0, 24)
+    lbEl.Position = UDim2.new(0, 10, 0, y)
+    lbEl.BackgroundTransparency = 1
+    lbEl.Text = lbl
+    lbEl.TextColor3 = Color3.fromRGB(150, 150, 150)
+    lbEl.TextSize = 12
+    lbEl.Font = Enum.Font.Gotham
+    lbEl.TextXAlignment = Enum.TextXAlignment.Left
+    lbEl.Parent = frame
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, 65, 0, 24)
+    box.Position = UDim2.new(1, -78, 0, y)
+    box.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    box.BorderSizePixel = 0
+    box.Text = tostring(startVal)
+    box.TextColor3 = Color3.fromRGB(210, 210, 210)
+    box.TextSize = 12
+    box.Font = Enum.Font.GothamBold
+    box.ClearTextOnFocus = false
+    box.Parent = frame
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 6)
+    bCorner.Parent = box
+    local bStroke = Instance.new("UIStroke")
+    bStroke.Color = Color3.fromRGB(55, 55, 55)
+    bStroke.Thickness = 1
+    bStroke.Parent = box
+    box.FocusLost:Connect(function()
+        local v = tonumber(box.Text)
+        if v then callback(v) else box.Text = tostring(startVal) end
+    end)
+end
+
+local function setBtnOn(btn, bs)
+    btn.BackgroundColor3 = Color3.fromRGB(160, 25, 25)
+    bs.Color = Color3.fromRGB(220, 55, 55)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
+local function setBtnOff(btn, bs)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    bs.Color = Color3.fromRGB(55, 55, 55)
+    btn.TextColor3 = Color3.fromRGB(210, 210, 210)
+end
+
+makeSep(32)
+local noClipBtn,  noClipBs  = makeBtn("NoClip: OFF", 40)
+local vflyBtn,    vflyBs    = makeBtn("VFly: OFF", 82)
+makeInput("VFly Speed", 124, flySpeed, function(v) flySpeed = v end)
+local flyBtn,     flyBs     = makeBtn("Fly: OFF", 154)
+makeInput("Fly Speed", 196, classicFlySpeed, function(v) classicFlySpeed = v end)
+local speedBtn,   speedBs   = makeBtn("Speed: OFF", 226)
+makeInput("Walk Speed", 268, walkSpeed, function(v)
+    walkSpeed = v
+    if speedEnabled then humanoid.WalkSpeed = v end
+end)
+makeSep(298)
+local respawnBtn, respawnBs = makeBtn("⟳  Auto-Respawn OFF", 306)
+makeSep(348)
+local killBtn,    killBs    = makeBtn("☠  Kill", 356)
+makeSep(398)
+local infJumpBtn, infJumpBs = makeBtn("↑  Inf Jump: OFF", 406)
+
+-- NoClip
+noClipBtn.MouseButton1Click:Connect(function()
+    noClip = not noClip
+    noClipBtn.Text = "NoClip: "..(noClip and "ON" or "OFF")
+    if noClip then
+        setBtnOn(noClipBtn, noClipBs)
+    else
+        setBtnOff(noClipBtn, noClipBs)
+        if char then
+            for _, v in pairs(char:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = true end
+            end
+        end
+    end
+end)
+game:GetService("RunService").Stepped:Connect(function()
+    if noClip and char then
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+-- VFly
+local vfly_bv
+vflyBtn.MouseButton1Click:Connect(function()
+    vfly_enabled = not vfly_enabled
+    vflyBtn.Text = "VFly: "..(vfly_enabled and "ON" or "OFF")
+    if vfly_enabled then
+        setBtnOn(vflyBtn, vflyBs)
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then vfly_enabled = false return end
+        if vfly_bv then vfly_bv:Destroy() end
+        vfly_bv = Instance.new("BodyVelocity")
+        vfly_bv.MaxForce = Vector3.new(0, 1e5, 0)
+        vfly_bv.P = 1e5
+        vfly_bv.Velocity = Vector3.new(0, 0, 0)
+        vfly_bv.Parent = hrp
+        task.spawn(function()
+            while vfly_enabled do
+                task.wait()
+                if not char or not char:FindFirstChild("HumanoidRootPart") then break end
+                local state = humanoid:GetState()
+                if state == Enum.HumanoidStateType.Jumping then
+                    vfly_bv.Velocity = Vector3.new(0, flySpeed * 10, 0)
+                else
+                    vfly_bv.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+            if vfly_bv then vfly_bv:Destroy() vfly_bv = nil end
+        end)
+    else
+        setBtnOff(vflyBtn, vflyBs)
+        vfly_enabled = false
+    end
+end)
+
+-- Fly
+local fly_bv
+flyBtn.MouseButton1Click:Connect(function()
+    classicFly = not classicFly
+    flyBtn.Text = "Fly: "..(classicFly and "ON" or "OFF")
+    if classicFly then
+        setBtnOn(flyBtn, flyBs)
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then classicFly = false return end
+        if fly_bv then fly_bv:Destroy() end
+        humanoid.WalkSpeed = 0
+        fly_bv = Instance.new("BodyVelocity")
+        fly_bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        fly_bv.P = 1e5
+        fly_bv.Velocity = Vector3.new(0, 0, 0)
+        fly_bv.Parent = hrp
+        task.spawn(function()
+            while classicFly do
+                task.wait()
+                if not char or not char:FindFirstChild("HumanoidRootPart") then break end
+                local md = humanoid.MoveDirection
+                local yVel = 0
+                if humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                    yVel = classicFlySpeed
+                end
+                if md.Magnitude > 0 then
+                    fly_bv.Velocity = Vector3.new(md.X * classicFlySpeed, yVel, md.Z * classicFlySpeed)
+                else
+                    fly_bv.Velocity = Vector3.new(0, yVel, 0)
+                end
+            end
+            if fly_bv then fly_bv:Destroy() fly_bv = nil end
+            humanoid.WalkSpeed = speedEnabled and walkSpeed or 16
+        end)
+    else
+        setBtnOff(flyBtn, flyBs)
+        classicFly = false
+    end
+end)
+
+-- Speed
+speedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    speedBtn.Text = "Speed: "..(speedEnabled and "ON" or "OFF")
+    if speedEnabled then setBtnOn(speedBtn, speedBs) humanoid.WalkSpeed = walkSpeed
+    else setBtnOff(speedBtn, speedBs) humanoid.WalkSpeed = 16 end
+end)
+
+-- Auto-Respawn
+respawnBtn.MouseButton1Click:Connect(function()
+    autoRespawn = not autoRespawn
+    respawnBtn.Text = "⟳  Auto-Respawn "..(autoRespawn and "ON" or "OFF")
+    if autoRespawn then setBtnOn(respawnBtn, respawnBs) else setBtnOff(respawnBtn, respawnBs) end
+end)
+player.CharacterRemoving:Connect(function()
+    if not autoRespawn then return end
+    local cam = workspace.CurrentCamera
+    local savedType = cam.CameraType
+    local savedCF = cam.CFrame
+    cam.CameraType = Enum.CameraType.Scriptable
+    cam.CFrame = savedCF
+    task.wait(0.1)
+    pcall(function() player:LoadCharacter() end)
+    player.CharacterAdded:Wait()
+    task.wait(0.1)
+    cam.CameraType = savedType
+end)
+
+-- Kill
+killBtn.MouseButton1Click:Connect(function()
+    setBtnOn(killBtn, killBs)
+    local c = player.Character
+    if c then
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = 0 end
+    end
+    task.wait(0.4)
+    setBtnOff(killBtn, killBs)
+end)
+
+-- Inf Jump
+infJumpBtn.MouseButton1Click:Connect(function()
+    infJump = not infJump
+    infJumpBtn.Text = "↑  Inf Jump: "..(infJump and "ON" or "OFF")
+    if infJump then setBtnOn(infJumpBtn, infJumpBs) else setBtnOff(infJumpBtn, infJumpBs) end
+end)
+humanoid.StateChanged:Connect(function(_, new)
+    if infJump and new == Enum.HumanoidStateType.Freefall then
+        task.wait(0.1)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+    end
+end)
+
+humanoid.Died:Connect(function() gui:Destroy() end)
+
+-- Drag mobile
+local dragging, dragStart, frameStart = false, nil, nil
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        frameStart = frame.Position
+    end
+end)
+frame.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+    or input.UserInputType == Enum.UserInputType.Touch) then
+        local d = input.Position - dragStart
+        frame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + d.X, frameStart.Y.Scale, frameStart.Y.Offset + d.Y)
+    end
+end)
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+    or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Mod poitrine
+task.wait(1)
+local torso = char:FindFirstChild("UpperTorso")
+if not torso then return end
+
+local L = Instance.new("Part")
+L.Size = Vector3.new(0.95, 0.9, 0.85)
+L.BrickColor = torso.BrickColor
+L.Color = torso.Color
+L.Material = torso.Material
+L.Anchored = true
+L.CanCollide = false
+L.CFrame = torso.CFrame * CFrame.new(-0.26, 0.05, -0.55)
+L.Parent = char
+local mL = Instance.new("SpecialMesh")
+mL.MeshType = Enum.MeshType.Sphere
+mL.Scale = Vector3.new(1.45, 1.35, 1.15)
+mL.Parent = L
+local shirt = char:FindFirstChildOfClass("Shirt")
+if shirt then mL.TextureId = shirt.ShirtTemplate end
+
+local R = Instance.new("Part")
+R.Size = Vector3.new(0.95, 0.9, 0.85)
+R.BrickColor = torso.BrickColor
+R.Color = torso.Color
+R.Material = torso.Material
+R.Anchored = true
+R.CanCollide = false
+R.CFrame = torso.CFrame * CFrame.new(0.26, 0.05, -0.55)
+R.Parent = char
+local mR = Instance.new("SpecialMesh")
+mR.MeshType = Enum.MeshType.Sphere
+mR.Scale = Vector3.new(1.45, 1.35, 1.15)
+mR.Parent = R
+if shirt then mR.TextureId = shirt.ShirtTemplate end
+
+local t = 0
+while true do
+    task.wait()
+    t = t + 0.016
+    if L.Parent and R.Parent and torso.Parent then
+        L.CFrame = torso.CFrame * CFrame.new(-0.26, 0.05 + math.sin(t*9)*0.06, -0.55) * CFrame.Angles(0,0,math.rad(-10))
+        R.CFrame = torso.CFrame * CFrame.new(0.26, 0.05 + math.sin(t*9+1)*0.06, -0.55) * CFrame.Angles(0,0,math.rad(10))
+    end
+end
