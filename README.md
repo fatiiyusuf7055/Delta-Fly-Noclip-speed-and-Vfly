@@ -1,4 +1,4 @@
-# 🚀 Delta Mobile GUI — Alpha v0.1
+# 🚀 Delta Mobile GUI — Alpha v0.3
 
 A lightweight mobile GUI with movement features.
 
