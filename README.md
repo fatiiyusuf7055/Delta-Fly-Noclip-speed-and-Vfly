@@ -4,9 +4,13 @@ A lightweight mobile GUI with movement features.
 
 ## ✨ Features
 ✔ Fly (FIX) 
+
 ✔ VFly (FIX) 
+
 ✔ NoClip (FIX) 
+
 ✔ Speed (little bug) 
+
 ✔ instant respawn 
 
 ## 📱 Mobile Support
